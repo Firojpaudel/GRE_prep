@@ -8,7 +8,7 @@ export default function Navbar() {
   const location = useLocation();
   const { logout } = useAuth();
   const [theme, setTheme] = useState<"light" | "dark">(
-    () => (localStorage.getItem("theme") as "light" | "dark") || "light"
+    () => (localStorage.getItem("theme") as "light" | "dark") || "dark"
   );
 
   useEffect(() => {

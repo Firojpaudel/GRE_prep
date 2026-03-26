@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Moon, Sun } from 'lucide-react';
 import appLogo from "../assets/final_logo.png";
 
 export default function AuthView({ message = "Sign in to access this section" }) {
@@ -11,6 +11,19 @@ export default function AuthView({ message = "Sign in to access this section" })
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(
+    () => (localStorage.getItem("theme") as "light" | "dark") || "dark"
+  );
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [theme]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +75,15 @@ export default function AuthView({ message = "Sign in to access this section" })
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6 animate-fade-up px-4">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6 animate-fade-up px-4 relative">
+      <button
+        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        className="fixed top-6 right-6 md:top-8 md:right-8 p-3 bg-white/50 dark:bg-[#111] rounded-full text-warm-grey hover:text-primary dark:text-gray-400 dark:hover:text-white transition-all backdrop-blur-md border border-border-subtle dark:border-gray-800 shadow-sm"
+        title="Toggle Theme"
+      >
+        {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+      </button>
+
       <div className="flex flex-col items-center gap-4 mb-4">
         <img 
           src={appLogo} 
