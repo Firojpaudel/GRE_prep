@@ -85,6 +85,8 @@ function getIcon(item: AssetItem) {
   return <Archive className="w-4 h-4" strokeWidth={1.6} />;
 }
 
+const driveFolderUrl = "https://drive.google.com/drive/folders/1T72zlkE86g0movi0rQh-3WmNilYXDYKH?usp=sharing";
+
 export default function Assets() {
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -290,15 +292,15 @@ export default function Assets() {
                         download
                         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-3 py-1.5 text-primary dark:text-gray-200 hover:border-primary dark:hover:border-gray-400 whitespace-nowrap"
                       >
-                        <Download className="w-3 h-3" /> Download
+                        <Download className="w-3 h-3" /> DL
                       </a>
                       <a
-                        href={item.isPdf ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(item.directUrl)}` : item.directUrl}
+                        href={driveFolderUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-3 py-1.5 text-warm-grey dark:text-gray-300 hover:text-primary dark:hover:text-white whitespace-nowrap"
+                        className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-3 py-1.5 text-blue-600 dark:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 whitespace-nowrap"
                       >
-                        <ExternalLink className="w-3 h-3" /> Open
+                        <ExternalLink className="w-3 h-3" /> Drive
                       </a>
                     </div>
                   </div>
@@ -360,27 +362,44 @@ export default function Assets() {
                   )}
 
                   {selected.isPdf && (
-                    <div className="w-full bg-black/40">
-                      <iframe
-                        src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(selected.directUrl)}`}
-                        className="w-full h-[600px] md:h-[800px]"
-                        title={selected.name}
-                      />
+                    <div className="flex flex-col items-center justify-center p-12 text-center bg-black/5 dark:bg-white/[0.02] border border-border-subtle dark:border-gray-800 border-dashed rounded-lg">
+                      <FileText className="w-12 h-12 text-warm-grey dark:text-gray-500 mb-4 opacity-50" />
+                      <h3 className="text-lg font-display text-primary dark:text-gray-200 mb-2">PDF Document</h3>
+                      <p className="text-sm text-warm-grey dark:text-gray-400 max-w-sm mb-6">
+                        This document is securely hosted on Google Drive. Click below to open and read it in Drive's native PDF viewer.
+                      </p>
+                      <a
+                        href={driveFolderUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-xs font-bold uppercase tracking-widest transition-all hover:scale-[1.02]"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Open in Google Drive
+                      </a>
                     </div>
                   )}
 
                   {!selected.isVideo &&
                     !selected.isImage &&
                     !selected.isPdf && (
-                      <div className="p-4 text-xs text-warm-grey dark:text-gray-400 leading-relaxed text-center min-h-[200px] flex items-center justify-center">
-                        <div>
-                          <div className="mb-2">{getIcon(selected)}</div>
-                          <p>
-                            Preview not available
-                            <br />
-                            for {selected.extension}
-                          </p>
+                      <div className="flex flex-col items-center justify-center p-12 text-center bg-black/5 dark:bg-white/[0.02] border border-border-subtle dark:border-gray-800 border-dashed rounded-lg">
+                        <div className="mb-4 opacity-50 [&>svg]:w-12 [&>svg]:h-12 text-warm-grey dark:text-gray-500">
+                           {getIcon(selected)}
                         </div>
+                        <h3 className="text-lg font-display text-primary dark:text-gray-200 mb-2">Drive File</h3>
+                        <p className="text-sm text-warm-grey dark:text-gray-400 max-w-sm mb-6">
+                          This file type cannot be previewed. Access it directly in our Google Drive vault.
+                        </p>
+                        <a
+                          href={driveFolderUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-xs font-bold uppercase tracking-widest transition-all hover:scale-[1.02]"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Open in Google Drive
+                        </a>
                       </div>
                     )}
                 </div>
@@ -391,15 +410,15 @@ export default function Assets() {
                     download
                     className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-2 text-primary dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
-                    <Download className="w-3 h-3" /> Download
+                    <Download className="w-3 h-3" /> Direct Download
                   </a>
                   <a
-                    href={selected.isPdf ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(selected.directUrl)}` : selected.directUrl}
+                    href={driveFolderUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-2 text-warm-grey dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
-                    <ExternalLink className="w-3 h-3" /> {selected.isPdf ? "Stream PDF" : "Open"}
+                    <ExternalLink className="w-3 h-3" /> Search in Drive
                   </a>
                 </div>
               </div>
