@@ -248,13 +248,13 @@ export default function Assets() {
                 return (
                   <div
                     key={item.relativePath}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 px-4 py-3 border-b border-border-subtle/70 dark:border-gray-800/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
+                    className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 px-4 py-3 border-b border-border-subtle/70 dark:border-gray-800/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors group"
                   >
                     <button
                       onClick={() => setSelected(item)}
                       className="text-left space-y-1"
                     >
-                      <div className="flex items-center gap-2 text-primary dark:text-gray-100 text-sm">
+                      <div className="flex items-center gap-2 text-primary dark:text-gray-100 text-sm group-hover:text-accent dark:group-hover:text-[#A67C52] transition-colors">
                         {getIcon(item)}
                         <span className="break-all">{item.name}</span>
                         {badge === "NEW" && (
@@ -344,11 +344,12 @@ export default function Assets() {
                   )}
 
                   {selected.isImage && (
-                    <div className="w-full flex items-center justify-center bg-black/5 dark:bg-black/40 min-h-[200px]">
+                    <div className="w-full flex items-center justify-center bg-black/5 dark:bg-black/40 min-h-[200px] overflow-hidden group">
                       <img
-                        src={selected.directUrl}
+                        src={selected.driveId ? `https://drive.google.com/uc?export=view&id=${selected.driveId}` : selected.directUrl}
                         alt={selected.name}
-                        className="max-w-full max-h-[320px] object-contain p-2"
+                        className="max-w-full max-h-[320px] object-contain p-2 animate-fade-in group-hover:scale-105 transition-transform duration-700 ease-out"
+                        loading="lazy"
                       />
                     </div>
                   )}
@@ -426,10 +427,10 @@ export default function Assets() {
                       <button
                         key={item.relativePath}
                         onClick={() => setSelected(item)}
-                        className={`text-left p-2.5 border transition-all duration-200 ${
+                        className={`text-left p-2.5 border transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-md ${
                           isSelected
                             ? "border-accent dark:border-[#CBB599] bg-accent/5 dark:bg-[#CBB599]/10"
-                            : "border-border-subtle dark:border-gray-700 hover:border-warm-grey dark:hover:border-gray-600"
+                            : "border-border-subtle dark:border-gray-700 hover:border-accent hover:bg-black/[0.01]"
                         }`}
                       >
                         <div className="flex items-start gap-1.5">
