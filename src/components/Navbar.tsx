@@ -1,8 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { Settings as SettingsIcon, LogOut, Moon, Sun } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const location = useLocation();
+  const { logout } = useAuth();
   const [theme, setTheme] = useState<"light" | "dark">(
     () => (localStorage.getItem("theme") as "light" | "dark") || "light"
   );
@@ -20,11 +23,10 @@ export default function Navbar() {
   const navLinks = [
     { name: "RESOURCES", path: "/" },
     { name: "PAID ASSETS", path: "/assets" },
-    { name: "VOCABULARY", path: "/vocab" },
+    { name: "VOCAB", path: "/vocab" },
     { name: "ARENA", path: "/arena" },
     { name: "STRATEGY", path: "/strategy" },
     { name: "PLANNERS", path: "/planners" },
-    { name: "ABOUT", path: "/about" },
   ];
 
   return (
@@ -33,7 +35,7 @@ export default function Navbar() {
         <div className="flex h-20 justify-between items-center">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-display font-medium uppercase tracking-widest text-primary dark:text-gray-100">
+            <Link to="/" className="text-xl md:text-2xl font-display font-medium uppercase tracking-widest text-primary dark:text-gray-100">
               Atelier GRE
             </Link>
           </div>
@@ -46,10 +48,10 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`text-xs font-bold tracking-[0.15em] hover-underline transition-colors duration-500 ease-out pb-1 ${
+                  className={`text-[11px] font-bold tracking-[0.15em] transition-colors duration-500 ease-out pb-1 ${
                     isActive
                       ? "text-primary dark:text-white border-b border-primary dark:border-white"
-                      : "text-warm-grey dark:text-gray-400 hover:text-primary dark:hover:text-white"
+                      : "text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-white"
                   }`}
                 >
                   {link.name}
@@ -59,16 +61,28 @@ export default function Navbar() {
           </div>
           
           {/* Action Items */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 border-l border-border-subtle dark:border-gray-800 pl-6 ml-4">
             <button
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="text-[10px] font-bold tracking-[0.2em] uppercase border border-border-subtle dark:border-gray-700 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-primary dark:text-gray-300"
+              className="p-2 text-warm-grey hover:text-primary dark:text-gray-500 dark:hover:text-white transition-colors"
+              title="Toggle Theme"
             >
-              {theme === "light" ? "Dark Mode" : "Light Mode"}
+              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
-            <div className="md:hidden flex items-center">
-              <span className="text-xs font-bold tracking-widest uppercase text-primary dark:text-white">Menu</span>
-            </div>
+            <Link 
+              to="/settings" 
+              className="p-2 text-warm-grey hover:text-primary dark:text-gray-500 dark:hover:text-white transition-colors"
+              title="Settings"
+            >
+              <SettingsIcon className="w-4 h-4" />
+            </Link>
+            <button 
+              onClick={logout}
+              className="p-2 text-warm-grey hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

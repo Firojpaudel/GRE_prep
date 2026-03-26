@@ -96,7 +96,7 @@ export default function Assets() {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const res = await fetch("/api/assets");
+        const res = await fetch("/assets.json");
 
         // Handle non-JSON responses (like Vite falling back to index.html when API is down)
         const contentType = res.headers.get("content-type");
@@ -176,7 +176,7 @@ export default function Assets() {
             <Flame className="w-3 h-3" />
             HOT
           </span>
-          are highlighted for quick picks.
+             &nbsp; are highlighted for quick picks.
         </p>
       </header>
 

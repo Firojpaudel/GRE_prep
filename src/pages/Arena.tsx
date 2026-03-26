@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { vocab3k, vocab7k } from "../data/mockVocab";
-import { Trophy, Flame, ChevronRight, Check, X, BookOpen, Globe } from "lucide-react";
+import { Trophy, Flame, Check, X, BookOpen, Globe } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import AuthView from "../components/AuthView";
 
 interface Question {
   word: string;
@@ -9,66 +11,44 @@ interface Question {
 }
 
 export default function Arena() {
-  const [user, setUser] = useState<any>(() => {
-    const saved = localStorage.getItem("gre_user");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const { user, token, logout, } = useAuth();
 
   const [score, setScore] = useState(0);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [streak, setStreak] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [testMode, setTestMode] = useState<"all" | "learned">("all");
-  const [learnedCount, setLearnedCount] = useState(0);
   
-  // Auth state
-  const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
+  const learnedCount = user?.user_data?.learnedWords?.length || 0;
 
-  // Load learned words count on mount
+  // Set default mode on init
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("gre_learned_words");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setLearnedCount(parsed.length);
-        // Default to learned mode if they have enough words learned
-        if (parsed.length >= 4) {
-          setTestMode("learned");
-        }
-      }
-    } catch {}
-  }, []);
+     if (learnedCount >= 4 && testMode !== "learned" && !currentQuestion) {
+         setTestMode("learned");
+     }
+  }, [learnedCount, testMode, currentQuestion]);
 
   // Generate a random question
   const generateQuestion = useCallback((mode = testMode) => {
     let wordList = [...vocab3k, ...vocab7k];
     
     if (mode === "learned") {
-      try {
-        const saved = localStorage.getItem("gre_learned_words");
-        const learnedIds = saved ? new Set<number>(JSON.parse(saved)) : new Set<number>();
-        const learnedWords = wordList.filter(v => learnedIds.has(v.id));
-        if (learnedWords.length >= 4) {
-          wordList = learnedWords;
-        } else {
-            // Not enough learned words to make a valid 4-option question
-            setTestMode("all");
-        }
-      } catch {}
+      const learnedIds = new Set<number>(user?.user_data?.learnedWords || []);
+      const learnedWords = wordList.filter(v => learnedIds.has(v.id));
+      if (learnedWords.length >= 4) {
+        wordList = learnedWords;
+      } else {
+        setTestMode("all");
+      }
     }
 
     if (wordList.length < 4) return;
 
-    // Pick a correct word
     const correctIdx = Math.floor(Math.random() * wordList.length);
     const correctWord = wordList[correctIdx];
 
-    // Pick 3 random wrong definitions
     const wrongDefs = new Set<string>();
     while (wrongDefs.size < 3) {
       const wrongIdx = Math.floor(Math.random() * wordList.length);
@@ -85,67 +65,54 @@ export default function Arena() {
       correctAnswer: correctWord.definition
     });
     setSelectedOption(null);
-  }, [testMode]);
+  }, [testMode, user?.user_data?.learnedWords]);
 
   useEffect(() => {
-    generateQuestion();
-  }, [generateQuestion]);
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError("");
-    
-    try {
-        const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-        const payload = isLogin 
-            ? { email, password } 
-            : { username, email, password };
-        
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
-        const requestUrl = apiBaseUrl
-          ? `${apiBaseUrl.replace(/\/$/, '')}${endpoint}`
-          : endpoint;
-
-        const res = await fetch(requestUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok) {
-            throw new Error(data.error || 'Authentication failed');
-        }
-        
-        setUser(data.user);
-        localStorage.setItem("gre_user", JSON.stringify(data.user));
-        localStorage.setItem("token", data.token);
-    } catch (err: any) {
-        setAuthError(err.message || "Authentication failed.");
+    if (user) {
+        generateQuestion();
     }
-  };
+  }, [generateQuestion, user]);
 
-  const handleLogout = () => {
-      setUser(null);
-      localStorage.removeItem("gre_user");
-      localStorage.removeItem("token");
-      setScore(0);
-      setStreak(0);
-  };
-
-  const handleAnswer = (opt: string) => {
+  const handleAnswer = async (opt: string) => {
     if (selectedOption) return;
     setSelectedOption(opt);
 
+    let newScore = score;
+    let newStreak = streak;
+
     if (opt === currentQuestion?.correctAnswer) {
-      setScore(prev => prev + 10 * (streak + 1));
-      setStreak(prev => prev + 1);
+      newScore = score + 10 * (streak + 1);
+      newStreak = streak + 1;
+      setScore(newScore);
+      setStreak(newStreak);
     } else {
+      newStreak = 0;
       setStreak(0);
     }
 
-    // Set animation state and queue next question
+    // Attempt to sync score to backend occasionally or if it beats high score
+    // In a real app we might debounce this, but here's a direct fetch for simplicity:
+    if (user && token && opt === currentQuestion?.correctAnswer) {
+        // Compare to existings
+        if (newScore > (user.high_score || 0) || newStreak > (user.longest_streak || 0)) {
+            const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
+            const endpoint = '/api/game/score';
+            const requestUrl = apiBaseUrl ? `${apiBaseUrl.replace(/\/$/, '')}${endpoint}` : endpoint;
+            
+            fetch(requestUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ score: newScore, streak: newStreak })
+            }).then(r => r.json()).then(() => {
+                // To keep context fully fresh, might need to update user context in reality.
+                // But for now, stats remain optimistically valid during the session.
+            }).catch(() => {});
+        }
+    }
+
     setIsAnimating(true);
     setTimeout(() => {
       setTimeout(() => {
@@ -156,72 +123,30 @@ export default function Arena() {
   };
 
   if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-fade-up">
-        <Trophy className="w-16 h-16 text-accent dark:text-[#CBB599] mb-4" strokeWidth={1} />
-        <h1 className="text-4xl text-primary dark:text-gray-100 font-display">The Assessment Arena</h1>
-        <p className="text-center text-warm-grey dark:text-gray-400 max-w-md leading-relaxed">
-          Test your vocabulary retention against dynamic algorithmic questions. Gain streaks, track accuracy, and lock your scores securely into your candidate profile.
-        </p>
-        
-        <div className="mt-8 border border-border-subtle dark:border-gray-700 bg-white dark:bg-[#111] p-8 space-y-6 flex flex-col items-center w-full max-w-sm">
-          <p className="text-xs font-bold tracking-widest uppercase text-primary dark:text-gray-300">
-            {isLogin ? "Sign In" : "Register Candidate"}
-          </p>
-          
-          <form onSubmit={handleAuth} className="w-full space-y-4">
-              {!isLogin && (
-                <input 
-                    type="text" 
-                    placeholder="Username" 
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    className="w-full px-4 py-3 bg-secondary dark:bg-[#1A1A1A] border border-border-subtle dark:border-gray-700 text-primary dark:text-gray-100 rounded focus:outline-none focus:border-accent dark:focus:border-[#CBB599]"
-                />
-              )}
-              
-              <input 
-                  type="email" 
-                  placeholder="Email Address" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 bg-secondary dark:bg-[#1A1A1A] border border-border-subtle dark:border-gray-700 text-primary dark:text-gray-100 rounded focus:outline-none focus:border-accent dark:focus:border-[#CBB599]"
-              />
-              
-              <input 
-                  type="password" 
-                  placeholder="Password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 bg-secondary dark:bg-[#1A1A1A] border border-border-subtle dark:border-gray-700 text-primary dark:text-gray-100 rounded focus:outline-none focus:border-accent dark:focus:border-[#CBB599]"
-              />
-
-              {authError && <p className="text-red-500 text-sm text-center">{authError}</p>}
-
-              <button 
-                  type="submit"
-                  className="w-full px-6 py-3 bg-primary dark:bg-gray-100 text-white dark:text-primary font-medium hover:bg-black dark:hover:bg-white transition-colors flex items-center justify-center gap-2"
-              >
-                  {isLogin ? "Authenticate" : "Enroll"} <ChevronRight className="w-4 h-4" />
-              </button>
-          </form>
-          
-          <button 
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-xs text-warm-grey dark:text-gray-500 hover:text-accent dark:hover:text-[#CBB599] transition-colors mt-4"
-          >
-              {isLogin ? "No profile? Register Instead" : "Already enrolled? Sign In"}
-          </button>
-        </div>
-      </div>
-    );
+    return <AuthView message="Join the Arena to test your limits" />;
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-12 animate-fade-in pb-16">
+      {showErrorModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div className="w-full max-w-md border border-border-subtle dark:border-gray-800 bg-white dark:bg-[#111] p-6 shadow-2xl">
+            <h3 className="text-lg font-display text-primary dark:text-gray-100">Learn More Words First</h3>
+            <p className="mt-2 text-sm text-warm-grey dark:text-gray-400 leading-relaxed">
+              You need at least 4 learned words in Vocab before you can use Learned mode in Arena.
+            </p>
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className="px-4 py-2 text-xs font-bold uppercase tracking-widest border border-primary dark:border-white text-primary dark:text-white hover:bg-black/5 dark:hover:bg-white/10"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Stats */}
       <div className="flex flex-col md:flex-row items-center justify-between p-6 gap-4 bg-white dark:bg-[#111] border border-border-subtle dark:border-gray-800 rounded-sm shadow-sm transition-colors duration-500">
         <div className="flex items-center gap-6">
@@ -240,8 +165,8 @@ export default function Arena() {
         </div>
         
         <div className="flex items-center gap-4 text-sm text-warm-grey dark:text-gray-400">
-          <span>{user.username || user.name || "Candidate"}</span>
-          <button onClick={handleLogout} className="hover:text-primary dark:hover:text-gray-200 underline underline-offset-4 decoration-border-subtle">
+          <span>{user.username || "Candidate"}</span>
+          <button onClick={logout} className="hover:text-primary dark:hover:text-gray-200 underline underline-offset-4 decoration-border-subtle">
             Log out
           </button>
         </div>
@@ -269,7 +194,7 @@ export default function Arena() {
               setTestMode("learned");
               generateQuestion("learned");
             } else {
-              alert("You need to mark at least 4 words as learned in the Vocab section first!");
+              setShowErrorModal(true);
             }
           }}
           className={`flex items-center gap-2 px-6 py-3 border text-xs font-bold uppercase tracking-widest transition-colors ${
@@ -290,7 +215,7 @@ export default function Arena() {
             <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-transparent via-accent dark:via-[#CBB599] to-transparent opacity-20"></div>
             
             <span className="text-xs font-bold tracking-widest text-accent dark:text-[#CBB599] uppercase mb-6">Define</span>
-            <h2 className="text-5xl font-display text-primary dark:text-gray-100 font-medium tracking-tight mb-10">
+            <h2 className="text-5xl font-display text-primary dark:text-gray-100 font-medium tracking-tight mb-10 text-center">
               {currentQuestion.word}
             </h2>
             

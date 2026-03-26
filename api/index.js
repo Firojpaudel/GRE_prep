@@ -17,7 +17,7 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
-const assetsRoot = path.join(projectRoot, 'assets');
+const assetsRoot = path.join(projectRoot, 'public', 'assets');
 
 const previewableExtensions = new Set([
     '.webm', '.mp4', '.ogg', '.mov',
@@ -70,6 +70,10 @@ const collectAssetEntries = (dirPath, currentRelativePath = '') => {
     return files;
 };
 
+if (!process.env.NEON_DATABASE_URL) {
+    console.error('Missing NEON_DATABASE_URL environment variable');
+}
+
 const sql = neon(process.env.NEON_DATABASE_URL || 'postgresql://user:password@endpoint.neon.tech/gre_prep');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_dev_key';
 
@@ -107,6 +111,10 @@ const verifyToken = (req, res, next) => {
 // 1. Sign Up
 app.post('/api/auth/register', async (req, res) => {
     try {
+        if (!process.env.NEON_DATABASE_URL) {
+            return res.status(503).json({ error: 'Server database is not configured. Set NEON_DATABASE_URL in Vercel environment variables.' });
+        }
+
         const { username, email, password } = req.body;
         if (!username || !email || !password) {
             return res.status(400).json({ error: 'Missing fields' });
@@ -117,7 +125,7 @@ app.post('/api/auth/register', async (req, res) => {
         const result = await sql`
             INSERT INTO users (username, email, password_hash)
             VALUES (${username}, ${email}, ${password_hash})
-            RETURNING id, username, email, high_score, longest_streak;
+            RETURNING id, username, email, high_score, longest_streak, user_data;
         `;
         
         const user = result[0];
@@ -136,6 +144,10 @@ app.post('/api/auth/register', async (req, res) => {
 // 2. Sign In
 app.post('/api/auth/login', async (req, res) => {
     try {
+        if (!process.env.NEON_DATABASE_URL) {
+            return res.status(503).json({ error: 'Server database is not configured. Set NEON_DATABASE_URL in Vercel environment variables.' });
+        }
+
         const { email, password } = req.body;
         const result = await sql`SELECT * FROM users WHERE email = ${email}`;
         
@@ -163,6 +175,10 @@ app.post('/api/auth/login', async (req, res) => {
 // 3. Submit/Update Game Score
 app.post('/api/game/score', verifyToken, async (req, res) => {
     try {
+        if (!process.env.NEON_DATABASE_URL) {
+            return res.status(503).json({ error: 'Server database is not configured. Set NEON_DATABASE_URL in Vercel environment variables.' });
+        }
+
         const { id } = req.user;
         const { score, streak } = req.body;
 
@@ -173,9 +189,33 @@ app.post('/api/game/score', verifyToken, async (req, res) => {
                 longest_streak = GREATEST(longest_streak, ${streak}),
                 last_played = CURRENT_TIMESTAMP
             WHERE id = ${id}
-            RETURNING id, username, high_score, longest_streak;
+            RETURNING id, username, high_score, longest_streak, user_data;
         `;
 
+        res.json({ user: result[0] });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Database Error' });
+    }
+});
+
+// Update User Data JSON (Progress/Streaks)
+app.post('/api/user/data', verifyToken, async (req, res) => {
+    try {
+        if (!process.env.NEON_DATABASE_URL) {
+            return res.status(503).json({ error: 'Server database is not configured. Set NEON_DATABASE_URL in Vercel environment variables.' });
+        }
+
+        const { id } = req.user;
+        const { user_data } = req.body;
+
+        const result = await sql`
+            UPDATE users
+            SET user_data = ${user_data}::jsonb
+            WHERE id = ${id}
+            RETURNING id, username, email, high_score, longest_streak, user_data;
+        `;
+        
         res.json({ user: result[0] });
     } catch (err) {
         console.error(err);
@@ -186,6 +226,10 @@ app.post('/api/game/score', verifyToken, async (req, res) => {
 // 4. Global Leaderboard
 app.get('/api/leaderboard', async (req, res) => {
     try {
+        if (!process.env.NEON_DATABASE_URL) {
+            return res.status(503).json({ error: 'Server database is not configured. Set NEON_DATABASE_URL in Vercel environment variables.' });
+        }
+
         const rows = await sql`
             SELECT username as name, high_score, longest_streak 
             FROM users 
