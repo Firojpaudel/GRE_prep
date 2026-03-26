@@ -47,7 +47,7 @@ const collectAssetEntries = (dirPath, currentRelativePath = '') => {
             isVideo: ['.webm', '.mp4', '.ogg', '.mov'].includes(ext),
             isImage: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext),
             isPdf: ext === '.pdf',
-            directUrl: `https://cdn.jsdelivr.net/gh/Firojpaudel/GRE_prep@main/public/assets/${encodeURI(webPath)}`
+            directUrl: `https://media.githubusercontent.com/media/Firojpaudel/GRE_prep/main/public/assets/${encodeURI(webPath)}`
         });
     }
 
