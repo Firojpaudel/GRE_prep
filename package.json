@@ -8,7 +8,7 @@
     "build": "node scripts/generateAssetsList.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "npm run build"
+    "vercel-build": "if [ -n \"$GITHUB_TOKEN\" ]; then git config remote.origin.url \"https://${GITHUB_TOKEN}@github.com/Firojpaudel/GRE_prep.git\"; git config lfs.url \"https://${GITHUB_TOKEN}@github.com/Firojpaudel/GRE_prep.git/info/lfs\"; git lfs pull; fi && npm run build"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
