@@ -183,6 +183,13 @@ export default function Assets() {
             &nbsp; are highlighted for quick picks.
           </p>
         </div>
+        
+        <div className="inline-flex items-center gap-2 border border-border-subtle dark:border-gray-800 bg-white/40 dark:bg-white/[0.02] px-3 py-1.5 rounded-sm">
+          <Sparkles className="w-3.5 h-3.5 text-accent dark:text-[#CBB599]" />
+          <span className="text-xs text-warm-grey dark:text-gray-400">
+            Special thanks to <strong className="text-primary dark:text-gray-200">Dristi didi</strong> for generously providing access to these premium resources.
+          </span>
+        </div>
       </header>
 
       <section className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">

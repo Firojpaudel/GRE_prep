@@ -1,27 +1,35 @@
-# GRE Prep Resources Compilation
+# GRE Prep
 
-A minimalist, comprehensive GRE prep platform offering curated free resources, study strategies, gamified multiple-choice vocabulary assessments, and dynamic progress tracking. Built with the "European editorial minimalism" aesthetic in mind.
+This project was born out of a personal necessity. Finding centralized, high-quality resources for GRE preparation was a frustrating and scattered experience. To solve this, I compiled the best study materials I could find into a single, refined platform.
 
-## 🚀 Features
+This is a minimalist, comprehensive GRE prep platform offering curated resources, study strategies, gamified multiple-choice vocabulary assessments, and dynamic progress tracking. Built with focus and utility in mind, this project aims to help future test-takers navigate their preparation journey without the friction of hunting down materials.
 
-- **Resource Dashboard:** Hand-picked free resources across Quant, Verbal, and AWA.
-- **Vocab Arena:** Gamified vocabulary assessments powered by dynamic multiple-choice generation. Tracks scores and longest streaks.
-- **Study Planners:** 30, 60, and 90-day study timelines utilizing scientifically proven repetition models.
-- **Methodologies:** Concrete action plans for conquering the GRE systematically.
-- **Stateless Authentication:** JWT-based user authentication system utilizing Email, Username, and Password (no third-party SSO required).
-- **Global Dark Mode:** Seamless switching between deep minimal dark mode and crisp light mode.
+## Acknowledgments
 
-## 🛠 Tech Stack
+Special thanks to Dristi didi for generously providing access to the premium, paid GRE resources that are now curated within the platform's Vault.
 
-- **Frontend:** React 19, Vite, Tailwind CSS v4, React Router v7, Lucide Icons.
-- **Backend:** Node.js, Express.js.
-- **Database:** [Neon Serverless PostgreSQL](https://neon.tech/).
-- **Authentication:** `bcryptjs` for secure password hashing, `jsonwebtoken` for robust stateless sessions.
+## Features
 
-## ⚙️ Setup Instructions
+- Resource Dashboard: Hand-picked resources across Quant, Verbal, and AWA.
+- Premium Vault: A curated compilation of premium books, software, and media resources.
+- Vocab Arena: Gamified vocabulary assessments powered by dynamic multiple-choice generation. Tracks scores and longest streaks.
+- Study Planners: 30, 60, and 90-day study timelines utilizing scientifically proven repetition models.
+- Methodologies: Concrete action plans for conquering the GRE systematically.
+- Pomodoro Timer: Integrated focus timer with study and break cycles.
+- Stateless Authentication: JWT-based user authentication system utilizing Email, Username, and Password (no third-party SSO required).
+- Global Dark Mode: Seamless switching between deep minimal dark mode and crisp light mode.
+
+## Tech Stack
+
+- Frontend: React 19, Vite, Tailwind CSS v4, React Router v7, Lucide Icons.
+- Backend: Node.js, Express.js.
+- Database: Neon Serverless PostgreSQL.
+- Authentication: bcryptjs for secure password hashing, jsonwebtoken for robust stateless sessions.
+
+## Setup Instructions
 
 ### 1. Database Setup (Neon PostgreSQL)
-1. Create a free account and project on [Neon.tech](https://neon.tech).
+1. Create a free account and project on Neon.tech.
 2. Obtain your Postgres connection string from the dashboard.
 3. Open the Neon SQL Editor for your project and instantiate the user table:
 
@@ -39,7 +47,7 @@ CREATE TABLE users (
 ```
 
 ### 2. Environment Variables (.env)
-Create a `.env` file in the **root** of the directory (where this `README.md` is located) and insert your database string and a secret key for JWTs:
+Create a `.env` file in the root of the directory (where this README.md is located) and insert your database string and a secret key for JWTs:
 
 ```env
 # Create a free project on https://neon.tech and paste the Postgres connection string here
@@ -49,7 +57,7 @@ NEON_DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD_HERE@ep-blue-flower-a
 JWT_SECRET="super_secret_dev_key_change_in_production"
 ```
 
-*(Note: The backend looks for variables in process.env, so depending on your runner you may need to ensure your `.env` is loaded, or place a `.env` block explicitly inside `/backend`.)*
+*(Note: The backend looks for variables in process.env, so depending on your runner you may need to ensure your .env is loaded, or place a `.env` block explicitly inside `/backend`.)*
 
 ### 3. Backend Setup
 1. Navigate to the backend directory:
@@ -60,7 +68,7 @@ JWT_SECRET="super_secret_dev_key_change_in_production"
    ```bash
    npm install
    ```
-3. Start the Express server (Defaults to `http://localhost:3001`):
+3. Start the Express server (Defaults to http://localhost:3001):
    ```bash
    node server.js
    ```
@@ -76,7 +84,7 @@ JWT_SECRET="super_secret_dev_key_change_in_production"
    npm run dev
    ```
 
-## 🧹 Project Structure
+## Project Structure
 
 - `/src`: Everything related to the React/Vite frontend (components, pages, styles).
 - `/backend`: The Express server and Database connection handlers.
