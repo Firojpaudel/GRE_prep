@@ -182,15 +182,6 @@ export default function Assets() {
             </span>
             &nbsp; are highlighted for quick picks.
           </p>
-          <a
-            href="https://drive.google.com/drive/folders/1T72zlkE86g0movi0rQh-3WmNilYXDYKH?usp=sharing"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 whitespace-nowrap border border-border-subtle dark:border-gray-700 px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary dark:text-gray-200 hover:border-primary dark:hover:border-gray-400 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Open in Google Drive
-          </a>
         </div>
       </header>
 
