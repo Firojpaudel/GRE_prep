@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { vocab3k, vocab7k } from "../data/mockVocab";
 import { CheckCircle2, Circle, EyeOff, Eye } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Vocab() {
+  const { user, updateUserData, logDailyActivity } = useAuth();
   const [activeTab, setActiveTab] = useState<"3k" | "7k">("3k");
   const [searchTerm, setSearchTerm] = useState("");
   const [hideLearned, setHideLearned] = useState(false);
@@ -15,15 +17,34 @@ export default function Vocab() {
     }
   });
 
+  // Sync learnedIds with user context if authenticated
+  useEffect(() => {
+    if (user?.user_data?.learnedWords) {
+      setLearnedIds(new Set(user.user_data.learnedWords));
+    }
+  }, [user?.user_data?.learnedWords]);
+
   const toggleLearned = (id: number) => {
     setLearnedIds(prev => {
       const next = new Set(prev);
+      let added = false;
       if (next.has(id)) {
         next.delete(id);
       } else {
         next.add(id);
+        added = true;
       }
-      localStorage.setItem("gre_learned_words", JSON.stringify(Array.from(next)));
+      
+      const newArray = Array.from(next);
+      localStorage.setItem("gre_learned_words", JSON.stringify(newArray));
+      
+      // Update global context
+      if (user) {
+        updateUserData({ learnedWords: newArray });
+        if (added) {
+          logDailyActivity({ words: 1 });
+        }
+      }
       return next;
     });
   };

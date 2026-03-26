@@ -8,11 +8,27 @@ export default function Pomodoro() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [mode, setMode] = useState<'study' | 'break'>('study');
+  const [elapsedStudySeconds, setElapsedStudySeconds] = useState(0);
 
   useEffect(() => {
     let interval: any = null;
     if (isRunning && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+        if (mode === 'study') {
+          setElapsedStudySeconds((prev) => {
+            const next = prev + 1;
+            if (next >= 60) {
+               // Update stats minute by minute
+               const currentMins = user?.user_data?.pomodoroMinutes || 0;
+               updateUserData({ pomodoroMinutes: currentMins + 1 });
+               logDailyActivity({ minutes: 1 });
+               return 0;
+            }
+            return next;
+          });
+        }
+      }, 1000);
     } else if (isRunning && timeLeft === 0) {
       setIsRunning(false);
       // Play sound? Add notification?
@@ -20,9 +36,6 @@ export default function Pomodoro() {
       
       // Update stats
       if (mode === 'study') {
-        const currentMins = user?.user_data?.pomodoroMinutes || 0;
-        updateUserData({ pomodoroMinutes: currentMins + 25 });
-        logDailyActivity({ minutes: 25 });
         setMode('break');
         setTimeLeft(5 * 60);
       } else {
@@ -80,7 +93,7 @@ export default function Pomodoro() {
     <div className="fixed bottom-6 right-6 w-[320px] bg-white/95 dark:bg-[#111]/95 backdrop-blur-xl border border-border-subtle dark:border-gray-800 shadow-2xl p-6 z-50 animate-scale-up rounded-sm">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
-          <Timer className={`w-4 h-4 ${isRunning ? 'text-accent animate-spin-slow' : 'text-warm-grey'}`} />
+          <Timer className={`w-4 h-4 ${isRunning ? 'text-accent animate-pulse' : 'text-warm-grey'}`} />
           <h3 className="text-[11px] font-bold tracking-[0.2em] uppercase text-primary dark:text-gray-300">Focus Session</h3>
         </div>
         <button onClick={() => setIsOpen(false)} className="text-warm-grey hover:text-red-500 transition-colors p-1">
@@ -120,7 +133,7 @@ export default function Pomodoro() {
         </button>
         <button 
           onClick={resetTimer}
-          className="flex-none flex items-center justify-center p-3.5 border border-border-subtle dark:border-gray-700 hover:border-primary dark:hover:border-white text-warm-grey hover:text-primary dark:hover:text-gray-200 transition-all hover:rotate-180 duration-500"
+          className="flex-none flex items-center justify-center p-3.5 border border-border-subtle dark:border-gray-700 hover:border-primary dark:hover:border-white text-warm-grey hover:text-primary dark:hover:text-gray-200 transition-all hover:scale-110 duration-500"
           title="Reset Timer"
         >
           <RotateCcw className="w-4 h-4" />
