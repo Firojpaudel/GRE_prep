@@ -164,20 +164,31 @@ export default function Assets() {
         <h1 className="text-4xl md:text-6xl text-primary dark:text-gray-100 font-display">
           Paid Resources Vault
         </h1>
-        <p className="max-w-3xl text-sm md:text-base text-warm-grey dark:text-gray-300 leading-relaxed">
-          Curated paid GRE resources worth studying: books, essay packs,
-          software bundles, and media lessons. Files marked
-          <span className="mx-2 inline-flex items-center gap-1 rounded-full border border-orange-300 bg-orange-50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-orange-700 dark:border-orange-700/60 dark:bg-orange-950/40 dark:text-orange-300">
-            <Sparkles className="w-3 h-3" />
-            NEW
-          </span>
-          or
-          <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-red-700 dark:border-red-700/60 dark:bg-red-950/40 dark:text-red-300">
-            <Flame className="w-3 h-3" />
-            HOT
-          </span>
-             &nbsp; are highlighted for quick picks.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-2 mb-4">
+          <p className="max-w-3xl text-sm md:text-base text-warm-grey dark:text-gray-300 leading-relaxed">
+            Curated paid GRE resources worth studying: books, essay packs,
+            software bundles, and media lessons. Files marked
+            <span className="mx-2 inline-flex items-center gap-1 rounded-full border border-orange-300 bg-orange-50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-orange-700 dark:border-orange-700/60 dark:bg-orange-950/40 dark:text-orange-300">
+              <Sparkles className="w-3 h-3" />
+              NEW
+            </span>
+            or
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-red-700 dark:border-red-700/60 dark:bg-red-950/40 dark:text-red-300">
+              <Flame className="w-3 h-3" />
+              HOT
+            </span>
+               &nbsp; are highlighted for quick picks.
+          </p>
+          <a
+            href="https://drive.google.com/drive/folders/1T72zlkE86g0movi0rQh-3WmNilYXDYKH?usp=sharing"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-sm text-sm font-bold uppercase tracking-widest transition-colors shadow-lg"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12.01 1.74l-3.3 5.71L2.09 19.34h2.2l6.63-11.48 4.41-7.66h-3.32zm.02 0l3.29 5.71h6.58L15.3 1.74h-3.27z"/> <path d="M11.99 22.26l-3.3-5.71H2.09l6.6 11.48h3.3z"/></svg>
+            Open in Google Drive
+          </a>
+        </div>
       </header>
 
       <section className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
@@ -383,12 +394,12 @@ export default function Assets() {
                     <Download className="w-3 h-3" /> Download
                   </a>
                   <a
-                    href={selected.directUrl}
+                    href={selected.isPdf ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(selected.directUrl)}` : selected.directUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-2 text-warm-grey dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
-                    <ExternalLink className="w-3 h-3" /> Open
+                    <ExternalLink className="w-3 h-3" /> {selected.isPdf ? "Stream PDF" : "Open"}
                   </a>
                 </div>
               </div>
