@@ -2,8 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Settings as SettingsIcon, LogOut, Moon, Sun } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import lightLogo from "../assets/light.png";
-import darkLogo from "../assets/dark.png";
+import appLogo from "../assets/final_logo.png";
 
 export default function Navbar() {
   const location = useLocation();
@@ -37,12 +36,15 @@ export default function Navbar() {
         <div className="flex h-20 justify-between items-center">
           {/* Logo */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center gap-3">
               <img 
-                src={theme === "dark" ? darkLogo : lightLogo} 
+                src={appLogo} 
                 alt="Atelier GRE Logo" 
-                className="h-10 md:h-12 w-auto object-contain"
+                className="h-8 md:h-10 w-auto object-contain invert dark:invert-0"
               />
+              <span className="text-xl md:text-2xl font-display font-medium uppercase tracking-widest text-primary dark:text-gray-100">
+                Atelier GRE
+              </span>
             </Link>
           </div>
           
