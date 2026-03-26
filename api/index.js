@@ -46,6 +46,9 @@ const collectAssetEntries = (dirPath, currentRelativePath = '') => {
         }
 
         if (!entry.isFile()) continue;
+        
+        // Ignore system files like desktop.ini
+        if (entry.name.toLowerCase() === 'desktop.ini' || entry.name.toLowerCase() === '.ds_store') continue;
 
         const ext = path.extname(entry.name).toLowerCase();
         const stat = fs.statSync(absolutePath);
