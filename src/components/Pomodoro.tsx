@@ -20,8 +20,9 @@ export default function Pomodoro() {
             const next = prev + 1;
             if (next >= 60) {
                // Update stats minute by minute
-               const currentMins = user?.user_data?.pomodoroMinutes || 0;
-               updateUserData({ pomodoroMinutes: currentMins + 1 });
+               updateUserData((prevData) => ({
+                 pomodoroMinutes: (prevData.pomodoroMinutes || 0) + 1
+               }));
                logDailyActivity({ minutes: 1 });
                return 0;
             }

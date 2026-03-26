@@ -22,7 +22,7 @@ type AuthContextType = {
   token: string | null;
   login: (userData: User, token: string) => void;
   logout: () => void;
-  updateUserData: (newData: Partial<UserData>) => Promise<void>;
+  updateUserData: (newData: Partial<UserData> | ((prev: UserData) => Partial<UserData>)) => Promise<void>;
   markStudyDay: () => void;
   logDailyActivity: (activity: { minutes?: number; words?: number; arenaPlays?: number }) => void;
 };
@@ -70,62 +70,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('token');
   };
 
-  const updateUserData = async (newData: Partial<UserData>) => {
-    if (!user || !token) return;
+  const updateUserData = async (newData: Partial<UserData> | ((prev: UserData) => Partial<UserData>)) => {
+    if (!token) return;
     
     setUser(prev => {
         if (!prev) return prev;
         const currentData = prev.user_data || {};
-        const updatedData = { ...currentData, ...newData };
+        const passedData = typeof newData === 'function' ? newData(currentData) : newData;
+        const updatedData = { ...currentData, ...passedData };
         const updatedUser = { ...prev, user_data: updatedData };
-        localStorage.setItem('gre_user', JSON.stringify(updatedUser));
         
-        // Background sync to server
-        const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
-        const endpoint = '/api/user/data';
-        const requestUrl = apiBaseUrl ? `${apiBaseUrl.replace(/\/$/, '')}${endpoint}` : endpoint;
-        
-        fetch(requestUrl, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ user_data: updatedData })
-        })
-          .then(async (res) => {
-            if (!res.ok) {
-              const text = await res.text();
-              throw new Error(text || 'Failed to sync user data');
-            }
-          })
-          .catch(err => console.error('Failed to sync:', err));
+        setTimeout(() => {
+          localStorage.setItem('gre_user', JSON.stringify(updatedUser));
+          const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
+          const endpoint = '/api/user/data';
+          const requestUrl = apiBaseUrl ? `${apiBaseUrl.replace(/\/$/, '')}${endpoint}` : endpoint;
+          
+          fetch(requestUrl, {
+              method: 'POST',
+              headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ user_data: updatedData })
+          }).catch(console.error);
+        }, 0);
 
         return updatedUser;
     });
   };
 
   const logDailyActivity = (activity: { minutes?: number; words?: number; arenaPlays?: number }) => {
-    if (!user) return;
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Also mark study day if not already
-    const days = user.user_data?.studyDays || [];
-    const newDays = days.includes(today) ? days : [...days, today];
+    setUser(prev => {
+        if (!prev) return prev;
+        const currentData = prev.user_data || {};
+        const today = new Date().toISOString().split('T')[0];
+        
+        const days = currentData.studyDays || [];
+        const newDays = days.includes(today) ? days : [...days, today];
 
-    const currentLog = user.user_data?.studyLog || {};
-    const todayLog = currentLog[today] || {};
+        const currentLog = currentData.studyLog || {};
+        const todayLog = currentLog[today] || {};
 
-    const updatedLog = {
-      ...currentLog,
-      [today]: {
-        minutes: (todayLog.minutes || 0) + (activity.minutes || 0),
-        words: (todayLog.words || 0) + (activity.words || 0),
-        arenaPlays: (todayLog.arenaPlays || 0) + (activity.arenaPlays || 0)
-      }
-    };
+        const updatedLog = {
+          ...currentLog,
+          [today]: {
+            minutes: (todayLog.minutes || 0) + (activity.minutes || 0),
+            words: (todayLog.words || 0) + (activity.words || 0),
+            arenaPlays: (todayLog.arenaPlays || 0) + (activity.arenaPlays || 0)
+          }
+        };
 
-    updateUserData({ studyDays: newDays, studyLog: updatedLog });
+        const updatedData = { ...currentData, studyDays: newDays, studyLog: updatedLog };
+        const updatedUser = { ...prev, user_data: updatedData };
+        
+        setTimeout(() => {
+          localStorage.setItem('gre_user', JSON.stringify(updatedUser));
+          if (token) {
+              const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
+              const endpoint = '/api/user/data';
+              const requestUrl = apiBaseUrl ? `${apiBaseUrl.replace(/\/$/, '')}${endpoint}` : endpoint;
+              fetch(requestUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                  body: JSON.stringify({ user_data: updatedData })
+              }).catch(console.error);
+          }
+        }, 0);
+
+        return updatedUser;
+    });
   };
 
   const markStudyDay = () => {
