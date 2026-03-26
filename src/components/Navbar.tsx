@@ -37,7 +37,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-3">
-              <img 
+              <img
                 src={appLogo} 
                 alt="Atelier GRE Logo" 
                 className="h-8 md:h-10 w-auto object-contain invert dark:invert-0"
