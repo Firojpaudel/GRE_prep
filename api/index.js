@@ -211,4 +211,12 @@ app.get('/api/assets', (req, res) => {
     }
 });
 
+// Start server if run directly/locally
+if (!process.env.VERCEL) {
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+        console.log(`Development API server running on port ${port}`);
+    });
+}
+
 export default app;

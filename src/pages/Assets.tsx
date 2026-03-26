@@ -61,11 +61,25 @@ export default function Assets() {
     const fetchAssets = async () => {
       try {
         const res = await fetch("/api/assets");
+        
+        // Handle non-JSON responses (like Vite falling back to index.html when API is down)
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("API is not available. Please ensure the backend server is running.");
+        }
+        
         if (!res.ok) {
           throw new Error("Could not load resources.");
         }
+        
         const data = await res.json();
-        setAssets(data.assets || []);
+        const assetList = data.assets || [];
+        setAssets(assetList);
+        // Auto-select first previewable
+        const firstPreviewable = assetList.find((a: AssetItem) => a.previewable);
+        if (firstPreviewable) {
+          setSelected(firstPreviewable);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load resources");
       } finally {
@@ -150,7 +164,7 @@ export default function Assets() {
             <div className="px-4 py-3 border-b border-border-subtle dark:border-gray-800 text-xs uppercase tracking-[0.12em] text-warm-grey dark:text-gray-400">
               Resource List ({filtered.length})
             </div>
-            <div className="max-h-[62vh] overflow-y-auto">
+            <div className="max-h-[62vh] overflow-y-auto scrollbar-smooth">
               {filtered.map((item) => {
                 const badge = getBadge(item);
                 return (
@@ -207,36 +221,48 @@ export default function Assets() {
             {selected && (
               <div className="space-y-3">
                 <div>
-                  <div className="text-sm text-primary dark:text-gray-100 break-all">{selected.name}</div>
-                  <div className="text-xs text-warm-grey dark:text-gray-400 break-all">{selected.relativePath}</div>
+                  <div className="text-sm text-primary dark:text-gray-100 break-all font-medium">{selected.name}</div>
+                  <div className="text-xs text-warm-grey dark:text-gray-500 break-all mt-1">{selected.relativePath}</div>
+                  <div className="text-xs text-warm-grey dark:text-gray-500 mt-1">{formatBytes(selected.sizeBytes)}</div>
                 </div>
 
-                {selected.isVideo && (
-                  <video controls className="w-full max-h-[340px] bg-black rounded">
-                    <source src={selected.directUrl} />
-                    Your browser does not support video playback.
-                  </video>
-                )}
+                <div className="bg-black/5 dark:bg-white/5 border border-border-subtle dark:border-gray-700 rounded overflow-hidden">
+                  {selected.isVideo && (
+                    <div className="w-full bg-black/80">
+                      <video controls preload="metadata" className="w-full max-h-[320px] bg-black">
+                        <source src={selected.directUrl} type={`video/${selected.extension.slice(1)}`} />
+                        Your browser does not support video playback.
+                      </video>
+                    </div>
+                  )}
 
-                {selected.isImage && (
-                  <img src={selected.directUrl} alt={selected.name} className="w-full max-h-[340px] object-contain bg-black/5 dark:bg-white/5" />
-                )}
+                  {selected.isImage && (
+                    <div className="w-full flex items-center justify-center bg-black/5 dark:bg-black/40 min-h-[200px]">
+                      <img src={selected.directUrl} alt={selected.name} className="max-w-full max-h-[320px] object-contain p-2" />
+                    </div>
+                  )}
 
-                {selected.isPdf && (
-                  <iframe src={selected.directUrl} className="w-full h-[340px] border border-border-subtle dark:border-gray-700" title={selected.name} />
-                )}
+                  {selected.isPdf && (
+                    <div className="w-full bg-black/40">
+                      <iframe src={`${selected.directUrl}#page=1`} className="w-full h-[320px]" title={selected.name} />
+                    </div>
+                  )}
 
-                {!selected.isVideo && !selected.isImage && !selected.isPdf && (
-                  <div className="text-xs text-warm-grey dark:text-gray-400 leading-relaxed">
-                    Direct preview unavailable for this file type. Use open or download.
-                  </div>
-                )}
+                  {!selected.isVideo && !selected.isImage && !selected.isPdf && (
+                    <div className="p-4 text-xs text-warm-grey dark:text-gray-400 leading-relaxed text-center min-h-[200px] flex items-center justify-center">
+                      <div>
+                        <div className="mb-2">{getIcon(selected)}</div>
+                        <p>Preview not available<br />for {selected.extension}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2">
                   <a
                     href={selected.directUrl}
                     download
-                    className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-1 text-primary dark:text-gray-200"
+                    className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-2 text-primary dark:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
                     <Download className="w-3 h-3" /> Download
                   </a>
@@ -244,7 +270,7 @@ export default function Assets() {
                     href={selected.directUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-1 text-warm-grey dark:text-gray-300"
+                    className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-2 text-warm-grey dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
                     <ExternalLink className="w-3 h-3" /> Open
                   </a>
@@ -253,19 +279,31 @@ export default function Assets() {
             )}
 
             {featured.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-border-subtle dark:border-gray-800">
-                <div className="text-[11px] uppercase tracking-widest text-warm-grey dark:text-gray-400 mb-2">Featured Previewables</div>
-                <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-auto pr-1">
-                  {featured.map((item) => (
-                    <button
-                      key={item.relativePath}
-                      onClick={() => setSelected(item)}
-                      className="text-left p-2 border border-border-subtle dark:border-gray-700 hover:border-primary dark:hover:border-gray-400"
-                    >
-                      <div className="text-xs text-primary dark:text-gray-200 break-all line-clamp-2">{item.name}</div>
-                      <div className="text-[10px] text-warm-grey dark:text-gray-500 mt-1">{item.extension || "file"}</div>
-                    </button>
-                  ))}
+              <div className="mt-5 pt-4 border-t border-border-subtle dark:border-gray-800">
+                <div className="text-[11px] uppercase tracking-widest text-warm-grey dark:text-gray-400 mb-3">Quick Access</div>
+                <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto scrollbar-smooth">
+                  {featured.map((item) => {
+                    const isSelected = selected?.relativePath === item.relativePath;
+                    return (
+                      <button
+                        key={item.relativePath}
+                        onClick={() => setSelected(item)}
+                        className={`text-left p-2.5 border transition-all duration-200 ${
+                          isSelected
+                            ? 'border-accent dark:border-[#CBB599] bg-accent/5 dark:bg-[#CBB599]/10'
+                            : 'border-border-subtle dark:border-gray-700 hover:border-warm-grey dark:hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-start gap-1.5">
+                          {getIcon(item)}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-primary dark:text-gray-200 break-words line-clamp-2 font-medium">{item.name}</div>
+                            <div className="text-[10px] text-warm-grey dark:text-gray-500 mt-1">{item.extension.slice(1).toUpperCase()}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
