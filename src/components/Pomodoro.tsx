@@ -8,7 +8,7 @@ export default function Pomodoro() {
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [mode, setMode] = useState<'study' | 'break'>('study');
-  const [elapsedStudySeconds, setElapsedStudySeconds] = useState(0);
+  const [, setElapsedStudySeconds] = useState(0);
 
   useEffect(() => {
     let interval: any = null;
