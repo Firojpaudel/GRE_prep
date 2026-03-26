@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { vocab3k } from "../data/mockVocab";
-import { Trophy, Flame, ChevronRight, Check, X } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { vocab3k, vocab7k } from "../data/mockVocab";
+import { Trophy, Flame, ChevronRight, Check, X, BookOpen, Globe } from "lucide-react";
 
 interface Question {
   word: string;
@@ -19,6 +19,8 @@ export default function Arena() {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [testMode, setTestMode] = useState<"all" | "learned">("all");
+  const [learnedCount, setLearnedCount] = useState(0);
   
   // Auth state
   const [isLogin, setIsLogin] = useState(true);
@@ -27,9 +29,39 @@ export default function Arena() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
 
+  // Load learned words count on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("gre_learned_words");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setLearnedCount(parsed.length);
+        // Default to learned mode if they have enough words learned
+        if (parsed.length >= 4) {
+          setTestMode("learned");
+        }
+      }
+    } catch {}
+  }, []);
+
   // Generate a random question
-  const generateQuestion = () => {
-    const wordList = vocab3k;
+  const generateQuestion = useCallback((mode = testMode) => {
+    let wordList = [...vocab3k, ...vocab7k];
+    
+    if (mode === "learned") {
+      try {
+        const saved = localStorage.getItem("gre_learned_words");
+        const learnedIds = saved ? new Set<number>(JSON.parse(saved)) : new Set<number>();
+        const learnedWords = wordList.filter(v => learnedIds.has(v.id));
+        if (learnedWords.length >= 4) {
+          wordList = learnedWords;
+        } else {
+            // Not enough learned words to make a valid 4-option question
+            setTestMode("all");
+        }
+      } catch {}
+    }
+
     if (wordList.length < 4) return;
 
     // Pick a correct word
@@ -53,11 +85,11 @@ export default function Arena() {
       correctAnswer: correctWord.definition
     });
     setSelectedOption(null);
-  };
+  }, [testMode]);
 
   useEffect(() => {
     generateQuestion();
-  }, []);
+  }, [generateQuestion]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,9 +221,9 @@ export default function Arena() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-12 animate-fade-in">
+    <div className="max-w-3xl mx-auto space-y-12 animate-fade-in pb-16">
       {/* Header Stats */}
-      <div className="flex items-center justify-between p-6 bg-white dark:bg-[#111] border border-border-subtle dark:border-gray-800 rounded-sm shadow-sm transition-colors duration-500">
+      <div className="flex flex-col md:flex-row items-center justify-between p-6 gap-4 bg-white dark:bg-[#111] border border-border-subtle dark:border-gray-800 rounded-sm shadow-sm transition-colors duration-500">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 text-primary dark:text-gray-200">
             <Trophy className="w-5 h-5 text-accent dark:text-[#CBB599]" />
@@ -213,6 +245,42 @@ export default function Arena() {
             Log out
           </button>
         </div>
+      </div>
+
+      {/* Mode Toggle */}
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={() => {
+            setTestMode("all");
+            generateQuestion("all");
+          }}
+          className={`flex items-center gap-2 px-6 py-3 border text-xs font-bold uppercase tracking-widest transition-colors ${
+            testMode === "all"
+              ? "border-primary dark:border-white text-primary dark:text-white bg-black/5 dark:bg-white/10"
+              : "border-border-subtle dark:border-gray-700 text-warm-grey dark:text-gray-500 hover:border-primary dark:hover:border-gray-400"
+          }`}
+        >
+          <Globe className="w-4 h-4" /> Global Pool
+        </button>
+        
+        <button
+          onClick={() => {
+            if (learnedCount >= 4) {
+              setTestMode("learned");
+              generateQuestion("learned");
+            } else {
+              alert("You need to mark at least 4 words as learned in the Vocab section first!");
+            }
+          }}
+          className={`flex items-center gap-2 px-6 py-3 border text-xs font-bold uppercase tracking-widest transition-colors ${
+            testMode === "learned"
+              ? "border-primary dark:border-white text-primary dark:text-white bg-black/5 dark:bg-white/10"
+              : "border-border-subtle dark:border-gray-700 text-warm-grey dark:text-gray-500 hover:border-primary dark:hover:border-gray-400"
+          } ${learnedCount < 4 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={learnedCount < 4 ? "Learn at least 4 words first" : "Test only on learned words"}
+        >
+          <BookOpen className="w-4 h-4" /> Learned ({learnedCount})
+        </button>
       </div>
 
       {/* Main Question Card */}

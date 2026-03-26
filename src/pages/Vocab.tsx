@@ -1,18 +1,43 @@
 import { useState, useMemo } from "react";
 import { vocab3k, vocab7k } from "../data/mockVocab";
+import { CheckCircle2, Circle, EyeOff, Eye } from "lucide-react";
 
 export default function Vocab() {
   const [activeTab, setActiveTab] = useState<"3k" | "7k">("3k");
   const [searchTerm, setSearchTerm] = useState("");
+  const [hideLearned, setHideLearned] = useState(false);
+  const [learnedIds, setLearnedIds] = useState<Set<number>>(() => {
+    try {
+      const saved = localStorage.getItem("gre_learned_words");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const toggleLearned = (id: number) => {
+    setLearnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      localStorage.setItem("gre_learned_words", JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
 
   const currentList = activeTab === "3k" ? vocab3k : vocab7k;
 
   const filteredVocab = useMemo(() => {
-    return currentList.filter((v) => 
-      v.word.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      v.definition.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [currentList, searchTerm]);
+    return currentList.filter((v) => {
+      const matchesSearch = v.word.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            v.definition.toLowerCase().includes(searchTerm.toLowerCase());
+      const isVisible = !(hideLearned && learnedIds.has(v.id));
+      return matchesSearch && isVisible;
+    });
+  }, [currentList, searchTerm, hideLearned, learnedIds]);
 
   return (
     <div className="space-y-12 animate-fade-up">
@@ -28,27 +53,39 @@ export default function Vocab() {
       </header>
 
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-border-subtle dark:border-gray-800 pb-4">
-        <div className="flex gap-8">
-          <button
-            onClick={() => setActiveTab("3k")}
-            className={`text-xs font-bold tracking-[0.1em] uppercase pb-2 transition-all duration-300 ease-out ${
-              activeTab === "3k" 
-                ? "text-primary dark:text-white border-b-2 border-primary dark:border-white" 
-                : "text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-gray-300"
-            }`}
-          >
-            3k Foundation
-          </button>
-          <button
-            onClick={() => setActiveTab("7k")}
-            className={`text-xs font-bold tracking-[0.1em] uppercase pb-2 transition-all duration-300 ease-out ${
-              activeTab === "7k" 
-                ? "text-primary dark:text-white border-b-2 border-primary dark:border-white" 
-                : "text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-gray-300"
-            }`}
-          >
-            7k Advanced
-          </button>
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-8">
+            <button
+              onClick={() => setActiveTab("3k")}
+              className={`text-xs font-bold tracking-[0.1em] uppercase pb-2 transition-all duration-300 ease-out ${
+                activeTab === "3k" 
+                  ? "text-primary dark:text-white border-b-2 border-primary dark:border-white" 
+                  : "text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-gray-300"
+              }`}
+            >
+              3k Foundation
+            </button>
+            <button
+              onClick={() => setActiveTab("7k")}
+              className={`text-xs font-bold tracking-[0.1em] uppercase pb-2 transition-all duration-300 ease-out ${
+                activeTab === "7k" 
+                  ? "text-primary dark:text-white border-b-2 border-primary dark:border-white" 
+                  : "text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-gray-300"
+              }`}
+            >
+              7k Advanced
+            </button>
+          </div>
+          <div className="flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-warm-grey dark:text-gray-500">
+            <span>Progress: {learnedIds.size} Learned</span>
+            <button 
+              onClick={() => setHideLearned(!hideLearned)}
+              className="flex items-center gap-1.5 hover:text-primary dark:hover:text-gray-300 transition-colors"
+            >
+              {hideLearned ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              {hideLearned ? "Show Learned" : "Hide Learned"}
+            </button>
+          </div>
         </div>
 
         <div className="w-full md:w-1/3">
@@ -73,15 +110,26 @@ export default function Vocab() {
             </tr>
           </thead>
           <tbody>
-            {filteredVocab.map((word) => (
+            {filteredVocab.map((word) => {
+              const isLearned = learnedIds.has(word.id);
+              return (
               <tr 
                 key={word.id} 
-                className="border-b border-border-subtle/50 dark:border-gray-800/80 even:bg-black/[0.015] dark:even:bg-white/[0.02] hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-colors duration-200 group animate-fade-up"
+                className={`border-b border-border-subtle/50 dark:border-gray-800/80 even:bg-black/[0.015] dark:even:bg-white/[0.02] transition-colors duration-200 group animate-fade-up ${isLearned ? 'opacity-50 hover:opacity-100' : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.05]'}`}
               >
                 <td className="py-5 pr-6 align-top">
-                  <span className="font-display font-semibold text-2xl text-primary dark:text-gray-200 group-hover:text-accent dark:group-hover:text-[#CBB599] transition-colors duration-300">
-                    {word.word}
-                  </span>
+                  <div className="flex items-start gap-3">
+                    <button 
+                      onClick={() => toggleLearned(word.id)}
+                      className="mt-1 text-warm-grey dark:text-gray-500 hover:text-green-600 dark:hover:text-green-500 transition-colors"
+                      title={isLearned ? "Mark as unlearned" : "Mark as learned"}
+                    >
+                      {isLearned ? <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-500" /> : <Circle className="w-5 h-5" />}
+                    </button>
+                    <span className={`font-display font-semibold text-2xl transition-colors duration-300 ${isLearned ? 'text-green-700 dark:text-green-500 line-through decoration-green-500/30' : 'text-primary dark:text-gray-200 group-hover:text-accent dark:group-hover:text-[#CBB599]'}`}>
+                      {word.word}
+                    </span>
+                  </div>
                 </td>
                 <td className="py-5 px-6 align-top space-y-2">
                   <div className="text-base text-primary dark:text-gray-300 leading-relaxed font-medium">
@@ -102,7 +150,8 @@ export default function Vocab() {
                   </span>
                 </td>
               </tr>
-            ))}
+            );
+          })}
             {filteredVocab.length === 0 && (
               <tr>
                 <td colSpan={4} className="py-16 text-center text-warm-grey dark:text-gray-500 text-base italic">
