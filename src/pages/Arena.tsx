@@ -69,9 +69,12 @@ export default function Arena() {
             ? { email, password } 
             : { username, email, password };
         
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-            
-        const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
+        const requestUrl = apiBaseUrl
+          ? `${apiBaseUrl.replace(/\/$/, '')}${endpoint}`
+          : endpoint;
+
+        const res = await fetch(requestUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
