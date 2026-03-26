@@ -293,7 +293,7 @@ export default function Assets() {
                         <Download className="w-3 h-3" /> Download
                       </a>
                       <a
-                        href={item.directUrl}
+                        href={item.isPdf ? `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(item.directUrl)}` : item.directUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-3 py-1.5 text-warm-grey dark:text-gray-300 hover:text-primary dark:hover:text-white whitespace-nowrap"
@@ -362,8 +362,8 @@ export default function Assets() {
                   {selected.isPdf && (
                     <div className="w-full bg-black/40">
                       <iframe
-                        src={`${selected.directUrl}#page=1`}
-                        className="w-full h-[320px]"
+                        src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(selected.directUrl)}`}
+                        className="w-full h-[600px] md:h-[800px]"
                         title={selected.name}
                       />
                     </div>
