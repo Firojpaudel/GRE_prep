@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ChevronRight, Trophy } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import appLogo from "../assets/final_logo.png";
 
 export default function AuthView({ message = "Sign in to access this section" }) {
   const { login } = useAuth();
@@ -61,11 +62,25 @@ export default function AuthView({ message = "Sign in to access this section" })
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-fade-up px-4">
-      <Trophy className="w-16 h-16 text-accent dark:text-[#CBB599] mb-4" strokeWidth={1} />
-      <h1 className="text-3xl text-primary dark:text-gray-100 font-display text-center">{message}</h1>
+    <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6 animate-fade-up px-4">
+      <div className="flex flex-col items-center gap-4 mb-4">
+        <img 
+          src={appLogo} 
+          alt="Atelier GRE Logo" 
+          className="h-20 md:h-24 w-auto object-contain invert dark:invert-0"
+        />
+        <h1 className="text-2xl md:text-3xl text-primary dark:text-gray-100 font-display text-center uppercase tracking-widest">
+          Atelier GRE
+        </h1>
+      </div>
       
-      <div className="mt-8 border border-border-subtle dark:border-gray-700 bg-white/50 dark:bg-[#111] p-8 space-y-6 flex flex-col items-center w-full max-w-sm">
+      <p className="text-sm md:text-base text-warm-grey dark:text-gray-400 text-center max-w-md mt-6 mb-2">
+        {message !== "Sign in to access this section" && message !== "Access Restricted. Sign in to your account."
+          ? message
+          : (isLogin ? "Welcome back! Sign in to continue your preparation." : "Join Atelier GRE to access premium preparation resources.")}
+      </p>
+
+      <div className="border border-border-subtle dark:border-gray-700 bg-white/50 dark:bg-[#111] p-8 space-y-6 flex flex-col items-center w-full max-w-sm">
         <p className="text-xs font-bold tracking-widest uppercase text-primary dark:text-gray-300">
           {isLogin ? "Sign In" : "Register Candidate"}
         </p>
