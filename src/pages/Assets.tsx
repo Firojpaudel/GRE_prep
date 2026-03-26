@@ -177,15 +177,15 @@ export default function Assets() {
               <Flame className="w-3 h-3" />
               HOT
             </span>
-               &nbsp; are highlighted for quick picks.
+            &nbsp; are highlighted for quick picks.
           </p>
           <a
             href="https://drive.google.com/drive/folders/1T72zlkE86g0movi0rQh-3WmNilYXDYKH?usp=sharing"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-sm text-sm font-bold uppercase tracking-widest transition-colors shadow-lg"
+            className="inline-flex items-center gap-2 whitespace-nowrap border border-border-subtle dark:border-gray-700 px-4 py-2 text-xs font-bold uppercase tracking-widest text-primary dark:text-gray-200 hover:border-primary dark:hover:border-gray-400 transition-colors"
           >
-            <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12.01 1.74l-3.3 5.71L2.09 19.34h2.2l6.63-11.48 4.41-7.66h-3.32zm.02 0l3.29 5.71h6.58L15.3 1.74h-3.27z"/> <path d="M11.99 22.26l-3.3-5.71H2.09l6.6 11.48h3.3z"/></svg>
+            <ExternalLink className="w-4 h-4" />
             Open in Google Drive
           </a>
         </div>
