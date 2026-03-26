@@ -4,12 +4,68 @@ import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
+const assetsRoot = path.join(projectRoot, 'assets');
+
+const previewableExtensions = new Set([
+    '.webm', '.mp4', '.ogg', '.mov',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
+    '.pdf', '.txt', '.md', '.html'
+]);
+
+const normalizePath = (relativePath) => relativePath.split(path.sep).join('/');
+
+const collectAssetEntries = (dirPath, currentRelativePath = '') => {
+    if (!fs.existsSync(dirPath)) return [];
+
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true })
+        .filter((entry) => !entry.name.startsWith('.'))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+    const files = [];
+
+    for (const entry of entries) {
+        const absolutePath = path.join(dirPath, entry.name);
+        const relativePath = path.join(currentRelativePath, entry.name);
+
+        if (entry.isDirectory()) {
+            files.push(...collectAssetEntries(absolutePath, relativePath));
+            continue;
+        }
+
+        if (!entry.isFile()) continue;
+
+        const ext = path.extname(entry.name).toLowerCase();
+        const stat = fs.statSync(absolutePath);
+        const webPath = normalizePath(relativePath);
+
+        files.push({
+            name: entry.name,
+            relativePath: webPath,
+            extension: ext,
+            sizeBytes: stat.size,
+            previewable: previewableExtensions.has(ext),
+            isVideo: ['.webm', '.mp4', '.ogg', '.mov'].includes(ext),
+            isImage: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext),
+            isPdf: ext === '.pdf',
+            directUrl: `/assets/${encodeURI(webPath)}`
+        });
+    }
+
+    return files;
+};
 
 const sql = neon(process.env.NEON_DATABASE_URL || 'postgresql://user:password@endpoint.neon.tech/gre_prep');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_super_secret_dev_key';
@@ -137,6 +193,21 @@ app.get('/api/leaderboard', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Database Error' });
+    }
+});
+
+// 5. Local Assets Index (for paid resources and software downloads)
+app.get('/api/assets', (req, res) => {
+    try {
+        const assets = collectAssetEntries(assetsRoot);
+        res.json({
+            root: 'assets',
+            count: assets.length,
+            assets
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Unable to read assets directory' });
     }
 });
 

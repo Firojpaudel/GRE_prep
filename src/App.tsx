@@ -5,6 +5,7 @@ import Strategy from "./pages/Strategy";
 import Planners from "./pages/Planners";
 import About from "./pages/About";
 import Arena from "./pages/Arena";
+import Assets from "./pages/Assets";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/arena" element={<Arena />} />
             <Route path="/strategy" element={<Strategy />} />
             <Route path="/planners" element={<Planners />} />
+            <Route path="/assets" element={<Assets />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>

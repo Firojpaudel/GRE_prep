@@ -19,6 +19,7 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "RESOURCES", path: "/" },
+    { name: "PAID ASSETS", path: "/assets" },
     { name: "VOCABULARY", path: "/vocab" },
     { name: "ARENA", path: "/arena" },
     { name: "STRATEGY", path: "/strategy" },

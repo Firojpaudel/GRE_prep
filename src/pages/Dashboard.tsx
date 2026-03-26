@@ -99,9 +99,14 @@ export default function Dashboard() {
       <section className="animate-fade-up delay-200">
         <div className="flex flex-col md:flex-row justify-between items-baseline mb-12">
           <h2 className="text-3xl text-primary dark:text-gray-100">The Archives</h2>
-          <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-warm-grey dark:text-gray-400 block mt-4 md:mt-0">
-            Open-Source & Free Tier Materials
-          </span>
+          <div className="flex items-center gap-4 mt-4 md:mt-0">
+            <span className="text-[11px] font-bold tracking-[0.15em] uppercase text-warm-grey dark:text-gray-400 block">
+              Open-Source & Free Tier Materials
+            </span>
+            <Link to="/assets" className="text-[11px] font-bold tracking-[0.15em] uppercase text-accent dark:text-[#CBB599] hover-underline">
+              Paid Assets Vault →
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-0">
