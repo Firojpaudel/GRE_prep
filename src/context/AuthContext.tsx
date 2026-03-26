@@ -23,6 +23,7 @@ type AuthContextType = {
   login: (userData: User, token: string) => void;
   logout: () => void;
   updateUserData: (newData: Partial<UserData> | ((prev: UserData) => Partial<UserData>)) => Promise<void>;
+  updateUserStats: (stats: Partial<User>) => void;
   markStudyDay: () => void;
   logDailyActivity: (activity: { minutes?: number; words?: number; arenaPlays?: number }) => void;
 };
@@ -68,6 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     localStorage.removeItem('gre_user');
     localStorage.removeItem('token');
+  };
+
+  const updateUserStats = (stats: Partial<User>) => {
+    setUser(prev => {
+        if (!prev) return prev;
+        const updatedUser = { ...prev, ...stats };
+        localStorage.setItem('gre_user', JSON.stringify(updatedUser));
+        return updatedUser;
+    });
   };
 
   const updateUserData = async (newData: Partial<UserData> | ((prev: UserData) => Partial<UserData>)) => {
@@ -152,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, updateUserData, markStudyDay, logDailyActivity }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUserData, updateUserStats, markStudyDay, logDailyActivity }}>
       {children}
     </AuthContext.Provider>
   );

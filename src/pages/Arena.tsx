@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { vocab3k, vocab7k } from "../data/mockVocab";
-import { Trophy, Flame, Check, X, BookOpen, Globe } from "lucide-react";
+import { Trophy, Flame, Check, X, BookOpen, Globe, BarChart2, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import AuthView from "../components/AuthView";
 
@@ -11,7 +11,7 @@ interface Question {
 }
 
 export default function Arena() {
-  const { user, token, logout, } = useAuth();
+  const { user, token, logout, updateUserStats } = useAuth();
 
   const [score, setScore] = useState(0);
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -20,6 +20,8 @@ export default function Arena() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [testMode, setTestMode] = useState<"all" | "learned">("all");
+  const [history, setHistory] = useState<{word: string; guess: string; correct: string; isCorrect: boolean}[]>([]);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   
   const learnedCount = user?.user_data?.learnedWords?.length || 0;
 
@@ -77,10 +79,19 @@ export default function Arena() {
     if (selectedOption) return;
     setSelectedOption(opt);
 
+    const isCorrect = opt === currentQuestion?.correctAnswer;
+    
+    setHistory(prev => [...prev, {
+       word: currentQuestion!.word,
+       guess: opt,
+       correct: currentQuestion!.correctAnswer,
+       isCorrect
+    }]);
+
     let newScore = score;
     let newStreak = streak;
 
-    if (opt === currentQuestion?.correctAnswer) {
+    if (isCorrect) {
       newScore = score + 10 * (streak + 1);
       newStreak = streak + 1;
       setScore(newScore);
@@ -90,10 +101,7 @@ export default function Arena() {
       setStreak(0);
     }
 
-    // Attempt to sync score to backend occasionally or if it beats high score
-    // In a real app we might debounce this, but here's a direct fetch for simplicity:
-    if (user && token && opt === currentQuestion?.correctAnswer) {
-        // Compare to existings
+    if (user && token && isCorrect) {
         if (newScore > (user.high_score || 0) || newStreak > (user.longest_streak || 0)) {
             const apiBaseUrl = (import.meta.env.VITE_API_URL || '').trim();
             const endpoint = '/api/game/score';
@@ -106,20 +114,25 @@ export default function Arena() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ score: newScore, streak: newStreak })
-            }).then(r => r.json()).then(() => {
-                // To keep context fully fresh, might need to update user context in reality.
-                // But for now, stats remain optimistically valid during the session.
-            }).catch(() => {});
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.user) {
+                    updateUserStats(data.user);
+                }
+            })
+            .catch(() => {});
         }
     }
 
-    setIsAnimating(true);
+    // Delay before fading out lets you read the card result
     setTimeout(() => {
+      setIsAnimating(true);
       setTimeout(() => {
         generateQuestion();
         setIsAnimating(false);
       }, 300);
-    }, 1500);
+    }, 2500);
   };
 
   if (!user) {
@@ -143,6 +156,58 @@ export default function Arena() {
                 Got it
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showAnalytics && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-fade-in">
+          <div className="bg-white dark:bg-[#111] border border-border-subtle dark:border-gray-800 p-6 md:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto relative shadow-2xl rounded-sm">
+            <button onClick={() => setShowAnalytics(false)} className="absolute top-6 right-6 text-warm-grey hover:text-red-500 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-2xl font-display text-primary dark:text-gray-100 mb-6 flex items-center gap-3">
+              <BarChart2 className="w-6 h-6 text-accent dark:text-[#CBB599]" /> Session Performance
+            </h2>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-secondary dark:bg-white/[0.02] p-4 rounded-sm border border-border-subtle dark:border-gray-800">
+                <p className="text-[10px] uppercase tracking-widest text-warm-grey dark:text-gray-500 mb-1">Attempted</p>
+                <p className="text-2xl font-display text-primary dark:text-gray-100">{history.length}</p>
+              </div>
+              <div className="bg-secondary dark:bg-white/[0.02] p-4 rounded-sm border border-border-subtle dark:border-gray-800">
+                <p className="text-[10px] uppercase tracking-widest text-warm-grey dark:text-gray-500 mb-1">Accuracy</p>
+                <p className="text-2xl font-display text-primary dark:text-gray-100">{history.length ? Math.round((history.filter(h => h.isCorrect).length / history.length) * 100) : 0}%</p>
+              </div>
+              <div className="bg-secondary dark:bg-white/[0.02] p-4 rounded-sm border border-border-subtle dark:border-gray-800">
+                <p className="text-[10px] uppercase tracking-widest text-warm-grey dark:text-gray-500 mb-1">Current Score</p>
+                <p className="text-2xl font-display text-primary dark:text-gray-100">{score}</p>
+              </div>
+              <div className="bg-secondary dark:bg-white/[0.02] p-4 rounded-sm border border-border-subtle dark:border-gray-800">
+                <p className="text-[10px] uppercase tracking-widest text-warm-grey dark:text-gray-500 mb-1">Max Streak</p>
+                <p className="text-2xl font-display text-primary dark:text-gray-100">{Math.max(streak, user?.longest_streak || 0)}</p>
+              </div>
+            </div>
+
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-primary dark:text-gray-200 mb-4 border-b border-border-subtle dark:border-gray-800 pb-2">Recent Encounters</h3>
+            {history.length === 0 ? (
+              <p className="text-sm text-warm-grey dark:text-gray-500 italic py-4 text-center">No challenges faced yet. Step into the arena.</p>
+            ) : (
+              <div className="space-y-3">
+                {[...history].reverse().map((h, i) => (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-secondary dark:bg-white/[0.015] border border-border-subtle/50 dark:border-gray-800 gap-3 group hover:border-primary dark:hover:border-white transition-colors">
+                    <div className="flex items-center gap-3">
+                      {h.isCorrect ? <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-500" /> : <XCircle className="w-5 h-5 text-red-600 dark:text-red-500" />}
+                      <span className="font-display text-xl text-primary dark:text-gray-100">{h.word}</span>
+                    </div>
+                    <div className="flex flex-col sm:items-end text-sm">
+                      <span className="text-warm-grey dark:text-gray-400">Guessed: <span className={h.isCorrect ? "text-green-600 dark:text-green-400 font-medium" : "text-red-600 dark:text-red-400 line-through"}>{h.guess.substring(0, 30)}{h.guess.length > 30 ? "..." : ""}</span></span>
+                      {!h.isCorrect && <span className="text-green-600 dark:text-green-400 mt-1 font-medium">Correct: {h.correct.substring(0, 35)}{h.correct.length > 35 ? "..." : ""}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -172,8 +237,10 @@ export default function Arena() {
         </div>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="flex justify-center gap-4">
+      {/* Controls Container */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* Mode Toggle */}
+        <div className="flex justify-center gap-4">
         <button
           onClick={() => {
             setTestMode("all");
@@ -205,6 +272,15 @@ export default function Arena() {
           title={learnedCount < 4 ? "Learn at least 4 words first" : "Test only on learned words"}
         >
           <BookOpen className="w-4 h-4" /> Learned ({learnedCount})
+        </button>
+        </div>
+
+        {/* Analytics Toggle */}
+        <button
+           onClick={() => setShowAnalytics(true)}
+           className="flex items-center justify-center gap-2 px-6 py-3 border border-border-subtle dark:border-gray-800 text-warm-grey dark:text-gray-400 hover:text-primary dark:hover:text-gray-100 hover:border-primary dark:hover:border-white transition-colors bg-white dark:bg-[#111] text-[11px] font-bold uppercase tracking-widest group"
+        >
+          <BarChart2 className="w-4 h-4 group-hover:text-accent transition-colors" /> Session Analytics
         </button>
       </div>
 
