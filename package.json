@@ -7,7 +7,8 @@
     "dev": "concurrently \"vite\" \"node api/index.js\"",
     "build": "node scripts/generateAssetsList.mjs && tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "vercel-build": "if [ -n \"$GITHUB_TOKEN\" ]; then git config --global url.\"https://${GITHUB_TOKEN}@github.com/\".insteadOf \"https://github.com/\" && git lfs pull; else echo \"NOTICE: No GITHUB_TOKEN set. PDFs/WebMs might not load.\"; fi && npm run build"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
