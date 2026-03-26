@@ -3,11 +3,19 @@ import path from 'node:path';
 
 const projectRoot = path.resolve(process.cwd());
 const assetsRoot = path.join(projectRoot, 'public', 'assets');
+const driveMapPath = path.join(projectRoot, 'scripts', 'driveMap.json');
+
+let driveMapping = {};
+if (fs.existsSync(driveMapPath)) {
+    driveMapping = JSON.parse(fs.readFileSync(driveMapPath, 'utf8'));
+}
+
+// Load Drive Map
 
 const previewableExtensions = new Set([
     '.webm', '.mp4', '.ogg', '.mov',
     '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
-    '.pdf', '.txt', '.md', '.html'
+    '.pdf', '.txt', '.md', '.html', '.pptx', '.doc', '.docx'
 ]);
 
 const normalizePath = (relativePath) => relativePath.split(path.sep).join('/');
@@ -37,6 +45,7 @@ const collectAssetEntries = (dirPath, currentRelativePath = '') => {
         const ext = path.extname(entry.name).toLowerCase();
         const stat = fs.statSync(absolutePath);
         const webPath = normalizePath(relativePath);
+        const dId = driveMapping[entry.name] || null;
 
         files.push({
             name: entry.name,
@@ -47,6 +56,7 @@ const collectAssetEntries = (dirPath, currentRelativePath = '') => {
             isVideo: ['.webm', '.mp4', '.ogg', '.mov'].includes(ext),
             isImage: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext),
             isPdf: ext === '.pdf',
+            driveId: dId,
             directUrl: `https://media.githubusercontent.com/media/Firojpaudel/GRE_prep/main/public/assets/${encodeURI(webPath)}`
         });
     }

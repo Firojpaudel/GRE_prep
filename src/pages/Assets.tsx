@@ -20,6 +20,7 @@ type AssetItem = {
   isImage: boolean;
   isPdf: boolean;
   directUrl: string;
+  driveId: string | null;
 };
 
 const hotKeywords = [
@@ -295,12 +296,12 @@ export default function Assets() {
                         <Download className="w-3 h-3" /> DL
                       </a>
                       <a
-                        href={driveFolderUrl}
+                        href={item.driveId ? `https://drive.google.com/file/d/${item.driveId}/view` : driveFolderUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-3 py-1.5 text-blue-600 dark:text-blue-400 hover:border-blue-600 dark:hover:border-blue-400 whitespace-nowrap"
                       >
-                        <ExternalLink className="w-3 h-3" /> Drive
+                        <ExternalLink className="w-3 h-3" /> {item.driveId ? "Open Item" : "Drive"}
                       </a>
                     </div>
                   </div>
@@ -361,45 +362,42 @@ export default function Assets() {
                     </div>
                   )}
 
-                  {selected.isPdf && (
-                    <div className="flex flex-col items-center justify-center p-12 text-center bg-black/5 dark:bg-white/[0.02] border border-border-subtle dark:border-gray-800 border-dashed rounded-lg">
-                      <FileText className="w-12 h-12 text-warm-grey dark:text-gray-500 mb-4 opacity-50" />
-                      <h3 className="text-lg font-display text-primary dark:text-gray-200 mb-2">PDF Document</h3>
-                      <p className="text-sm text-warm-grey dark:text-gray-400 max-w-sm mb-6">
-                        This document is securely hosted on Google Drive. Click below to open and read it in Drive's native PDF viewer.
-                      </p>
-                      <a
-                        href={driveFolderUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-xs font-bold uppercase tracking-widest transition-all hover:scale-[1.02]"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Open in Google Drive
-                      </a>
+                  {selected.driveId && !selected.isVideo && !selected.isImage ? (
+                    <div className="w-full bg-black/40 border border-border-subtle dark:border-gray-700 rounded overflow-hidden">
+                      <iframe
+                        src={`https://drive.google.com/file/d/${selected.driveId}/preview`}
+                        className="w-full h-[600px] md:h-[800px]"
+                        title={selected.name}
+                        frameBorder="0"
+                        allow="autoplay"
+                      />
                     </div>
-                  )}
+                  ) : selected.isPdf ? (
+                     <div className="p-4 text-xs text-warm-grey dark:text-gray-400 leading-relaxed text-center min-h-[200px] flex items-center justify-center">
+                        <div>
+                          <div className="mb-2">{getIcon(selected)}</div>
+                          <p>
+                            Preview not available
+                            <br />
+                            for {selected.extension}
+                          </p>
+                        </div>
+                      </div>
+                  ) : null}
 
                   {!selected.isVideo &&
                     !selected.isImage &&
-                    !selected.isPdf && (
-                      <div className="flex flex-col items-center justify-center p-12 text-center bg-black/5 dark:bg-white/[0.02] border border-border-subtle dark:border-gray-800 border-dashed rounded-lg">
-                        <div className="mb-4 opacity-50 [&>svg]:w-12 [&>svg]:h-12 text-warm-grey dark:text-gray-500">
-                           {getIcon(selected)}
+                    !selected.isPdf &&
+                    !selected.driveId && (
+                      <div className="p-4 text-xs text-warm-grey dark:text-gray-400 leading-relaxed text-center min-h-[200px] flex items-center justify-center">
+                        <div>
+                          <div className="mb-2">{getIcon(selected)}</div>
+                          <p>
+                            Preview not available
+                            <br />
+                            for {selected.extension}
+                          </p>
                         </div>
-                        <h3 className="text-lg font-display text-primary dark:text-gray-200 mb-2">Drive File</h3>
-                        <p className="text-sm text-warm-grey dark:text-gray-400 max-w-sm mb-6">
-                          This file type cannot be previewed. Access it directly in our Google Drive vault.
-                        </p>
-                        <a
-                          href={driveFolderUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-xs font-bold uppercase tracking-widest transition-all hover:scale-[1.02]"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Open in Google Drive
-                        </a>
                       </div>
                     )}
                 </div>
@@ -413,12 +411,12 @@ export default function Assets() {
                     <Download className="w-3 h-3" /> Direct Download
                   </a>
                   <a
-                    href={driveFolderUrl}
+                    href={selected.driveId ? `https://drive.google.com/file/d/${selected.driveId}/view` : driveFolderUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="flex-1 inline-flex items-center justify-center gap-1 text-[11px] uppercase tracking-widest border border-border-subtle dark:border-gray-700 px-2 py-2 text-warm-grey dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                   >
-                    <ExternalLink className="w-3 h-3" /> Search in Drive
+                    <ExternalLink className="w-3 h-3" /> {selected.driveId ? "Open Item" : "Search in Drive"}
                   </a>
                 </div>
               </div>
