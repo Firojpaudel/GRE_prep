@@ -37,7 +37,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 bg-sand/90 dark:bg-[#0A0A0A]/90 backdrop-blur-md border-b border-border-subtle dark:border-gray-800 transition-colors duration-500">
+    <nav className="sticky top-0 z-50 bg-sand/90 dark:bg-[#0A0A0A]/90 backdrop-blur-md border-b border-border-subtle dark:border-gray-800 transition-colors duration-500">
       <div className="max-w-[1280px] mx-auto px-4 md:px-6">
         <div className="flex h-16 md:h-20 justify-between items-center">
           {/* Logo */}
@@ -119,20 +119,28 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* Mobile Overlay Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 top-16 z-40 bg-black/50 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Mobile Menu Dropdown */}
       <div 
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          isMobileMenuOpen ? "max-h-96 opacity-100 border-t border-border-subtle dark:border-gray-800" : "max-h-0 opacity-0"
+        className={`md:hidden absolute top-16 left-0 w-full bg-sand/95 dark:bg-[#0A0A0A]/95 backdrop-blur-xl border-b border-border-subtle dark:border-gray-800 shadow-2xl transition-all duration-300 ease-in-out z-50 flex flex-col overflow-hidden ${
+          isMobileMenuOpen ? "max-h-[calc(100vh-4rem)] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
-        <div className="bg-sand/95 dark:bg-[#0A0A0A]/95 backdrop-blur-md px-4 py-4 space-y-4 shadow-xl">
+        <div className="px-4 py-6 space-y-4 overflow-y-auto max-h-[calc(100vh-4rem)] flex-1">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.path && link.path !== "#";
             return (
               <Link
                 key={link.name}
                 to={link.path}
-                className={`block px-2 py-2 text-xs font-bold tracking-[0.15em] transition-colors ${
+                className={`block px-2 py-3 text-xs font-bold tracking-[0.15em] transition-colors ${
                   isActive
                     ? "text-primary dark:text-white bg-primary/5 dark:bg-white/5 rounded-md"
                     : "text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-white"
@@ -143,7 +151,7 @@ export default function Navbar() {
             );
           })}
           
-          <div className="pt-4 mt-2 border-t border-border-subtle dark:border-gray-800 flex flex-col gap-1">
+          <div className="pt-6 mt-4 border-t border-border-subtle dark:border-gray-800 flex flex-col gap-2 pb-8">
             <Link 
               to="/settings" 
               className="flex items-center gap-3 px-2 py-3 text-xs font-bold tracking-[0.15em] uppercase text-warm-grey dark:text-gray-500 hover:text-primary dark:hover:text-white transition-colors"
@@ -152,7 +160,7 @@ export default function Navbar() {
             </Link>
             <button 
               onClick={logout}
-              className="flex items-center gap-3 px-2 py-3 text-xs font-bold tracking-[0.15em] uppercase text-warm-grey hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors w-full text-left"
+              className="flex items-center gap-3 px-2 py-3 text-xs font-bold tracking-[0.15em] uppercase text-warm-grey hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors w-full text-left bg-transparent"
             >
               <LogOut className="w-4 h-4" /> Sign Out
             </button>
