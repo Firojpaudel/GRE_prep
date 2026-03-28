@@ -51,6 +51,15 @@ export default function Vocab() {
 
   const currentList = activeTab === "3k" ? vocab3k : vocab7k;
 
+  const vocab3kCount = vocab3k.length;
+  const vocab7kCount = vocab7k.length;
+  const learned3kCount = vocab3k.filter(v => learnedIds.has(v.id)).length;
+  const learned7kCount = vocab7k.filter(v => learnedIds.has(v.id)).length;
+  
+  const currentTotal = activeTab === "3k" ? vocab3kCount : vocab7kCount;
+  const currentLearned = activeTab === "3k" ? learned3kCount : learned7kCount;
+  const progressPercentage = currentTotal === 0 ? 0 : Math.round((currentLearned / currentTotal) * 100);
+
   const filteredVocab = useMemo(() => {
     return currentList.filter((v) => {
       const matchesSearch = v.word.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -72,6 +81,19 @@ export default function Vocab() {
           </h1>
         </div>
       </header>
+
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between text-xs text-warm-grey dark:text-gray-400 font-bold tracking-widest uppercase">
+          <span>Progress ({activeTab === "3k" ? "Foundation" : "Advanced"})</span>
+          <span>{progressPercentage}% ({currentLearned}/{currentTotal})</span>
+        </div>
+        <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary/80 dark:bg-primary transition-all duration-500 ease-out" 
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+      </div>
 
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-border-subtle dark:border-gray-800 pb-4">
         <div className="flex flex-col gap-4">

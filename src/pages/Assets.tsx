@@ -8,7 +8,10 @@ import {
   Image as ImageIcon,
   FileText,
   Archive,
+  CheckCircle2,
+  Circle
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 type AssetItem = {
   name: string;
@@ -89,6 +92,45 @@ function getIcon(item: AssetItem) {
 const driveFolderUrl = "https://drive.google.com/drive/folders/1T72zlkE86g0movi0rQh-3WmNilYXDYKH?usp=sharing";
 
 export default function Assets() {
+  const { user, updateUserData } = useAuth();
+  
+  const [assetProgress, setAssetProgress] = useState<Record<string, 'in-progress' | 'completed'>>(() => {
+    try {
+      const saved = localStorage.getItem("gre_asset_progress");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (user?.user_data?.assetProgress) {
+      setAssetProgress(user.user_data.assetProgress);
+    }
+  }, [user?.user_data?.assetProgress]);
+
+  const toggleAssetProgress = (path: string, e?: React.MouseEvent) => {
+    if(e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setAssetProgress(prev => {
+      const next = { ...prev };
+      if (next[path] === 'completed') {
+        delete next[path];
+      } else {
+        next[path] = 'completed';
+      }
+      
+      localStorage.setItem("gre_asset_progress", JSON.stringify(next));
+      
+      if (user && updateUserData) {
+        updateUserData({ assetProgress: next });
+      }
+      return next;
+    });
+  };
+
   const [assets, setAssets] = useState<AssetItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -205,15 +247,31 @@ export default function Assets() {
           />
         </div>
 
-        <div className="border border-border-subtle dark:border-gray-800 p-4 md:p-5 bg-white/40 dark:bg-white/[0.02]">
-          <div className="text-[11px] font-bold tracking-[0.12em] uppercase text-warm-grey dark:text-gray-400">
-            Total Files
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 border border-border-subtle dark:border-gray-800 p-4 md:p-5 bg-white/40 dark:bg-white/[0.02]">
+            <div className="text-[11px] font-bold tracking-[0.12em] uppercase text-warm-grey dark:text-gray-400">
+              Total Files
+            </div>
+            <div className="mt-2 text-3xl font-display text-primary dark:text-white">
+              {assets.length}
+            </div>
+            <div className="text-xs text-warm-grey dark:text-gray-400 mt-1">
+              All content listed with download access
+            </div>
           </div>
-          <div className="mt-2 text-3xl font-display text-primary dark:text-white">
-            {assets.length}
-          </div>
-          <div className="text-xs text-warm-grey dark:text-gray-400 mt-1">
-            All content listed with download access
+          <div className="flex-1 border border-border-subtle dark:border-gray-800 p-4 md:p-5 bg-white/40 dark:bg-white/[0.02]">
+            <div className="text-[11px] font-bold tracking-[0.12em] uppercase text-warm-grey dark:text-gray-400">
+              Vault Progress
+            </div>
+            <div className="mt-2 text-3xl font-display text-primary dark:text-white">
+              {assets.length > 0 ? Math.round((Object.keys(assetProgress).length / assets.length) * 100) : 0}%
+            </div>
+            <div className="w-full h-1.5 mt-2 bg-border-subtle dark:bg-gray-800 overflow-hidden">
+               <div 
+                 className="h-full bg-primary/80 dark:bg-primary transition-all duration-500 ease-out" 
+                 style={{ width: `${assets.length > 0 ? Math.round((Object.keys(assetProgress).length / assets.length) * 100) : 0}%` }}
+               />
+            </div>
           </div>
         </div>
       </section>
@@ -262,6 +320,13 @@ export default function Assets() {
                       className="text-left space-y-1"
                     >
                       <div className="flex items-center gap-2 text-primary dark:text-gray-100 text-sm group-hover:text-accent dark:group-hover:text-[#A67C52] transition-colors">
+                        <button onClick={(e) => toggleAssetProgress(item.relativePath, e)} className="mr-1 shrink-0 text-warm-grey hover:text-primary dark:text-gray-500 dark:hover:text-gray-300 transition-colors">
+                            {assetProgress[item.relativePath] === 'completed' ? (
+                                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500" />
+                            ) : (
+                                <Circle className="w-4 h-4" />
+                            )}
+                        </button>
                         {getIcon(item)}
                         <span className="break-all">{item.name}</span>
                         {badge === "NEW" && (
